@@ -30,6 +30,7 @@ import receive from "./commands/receive";
 import repl from "./commands/repl";
 import send from "./commands/send";
 import signMessage from "./commands/signMessage";
+import swaptest from "./commands/swaptest";
 import sync from "./commands/sync";
 import testGetTrustedInputFromTxHash from "./commands/testGetTrustedInputFromTxHash";
 import validRecipient from "./commands/validRecipient";
@@ -68,6 +69,7 @@ export default {
   repl,
   send,
   signMessage,
+  swaptest,
   sync,
   testGetTrustedInputFromTxHash,
   validRecipient,
