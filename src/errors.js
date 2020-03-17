@@ -44,3 +44,11 @@ export const TronUnexpectedFees = createCustomErrorClass("TronUnexpectedFees");
 export const TronNotEnoughTronPower = createCustomErrorClass(
   "TronNotEnoughTronPower"
 );
+
+export const SwapNoAvailableProviders = createCustomErrorClass(
+  "SwapNoAvailableProviders"
+);
+
+export const SwapExchangeRateOutOfBounds = createCustomErrorClass(
+  "SwapExchangeRateOutOfBounds"
+);
