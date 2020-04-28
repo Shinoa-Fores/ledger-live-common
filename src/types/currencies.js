@@ -1,15 +1,4 @@
-// @flow
-
-export type Unit = {
-  // display name of a given unit (example: satoshi)
-  name: string,
-  // string to use when formatting the unit. like 'BTC' or 'USD'
-  code: string,
-  // number of digits after the '.'
-  magnitude: number,
-  // should it always print all digits even if they are 0 (usually: true for fiats, false for cryptos)
-  showAllDigits?: boolean
-};
+//@flow
 
 type CurrencyCommon = {
   // display name of a currency
@@ -18,37 +7,25 @@ type CurrencyCommon = {
   ticker: string,
   // all units of a currency (e.g. Bitcoin have bitcoin, mBTC, bit, satoshi)
   // by convention, [0] is the default and have "highest" magnitude
-  units: Unit[],
+  units: Unit[]
+};
+
+export type Unit = {
+  // display name of a given unit (exemple: satoshi)
+  name: string,
+  // string to use when formatting the unit. like 'BTC' or 'USD'
+  code: string,
+  // number of digits after the '.'
+  magnitude: number,
   // a shorter version of code using the symbol of the currency. like Ƀ . not all cryptocurrencies have a symbol
   symbol?: string,
-  // tells if countervalue need to be disabled (typically because colliding with other coins)
-  disableCountervalue?: boolean,
-  delisted?: boolean
+  // should it always print all digits even if they are 0 (usually: true for fiats, false for cryptos)
+  showAllDigits?: boolean
 };
 
-export type TokenCurrency = CurrencyCommon & {
-  type: "TokenCurrency",
-  id: string,
-  ledgerSignature?: string,
-  contractAddress: string,
-  // the currency it belongs to. e.g. 'ethereum'
-  parentCurrency: CryptoCurrency,
-  // the type of token in the blockchain it belongs. e.g. 'erc20'
-  tokenType: string
-};
-
-export type FiatCurrency = CurrencyCommon & {
-  type: "FiatCurrency"
-};
-
-export type ExplorerView = {
-  tx?: string,
-  address?: string,
-  token?: string
-};
+export type FiatCurrency = CurrencyCommon;
 
 export type CryptoCurrency = CurrencyCommon & {
-  type: "CryptoCurrency",
   // unique internal id of a crypto currency
   id: string,
   // define if a crypto is a fork from another coin. helps dealing with split/unsplit
@@ -62,24 +39,20 @@ export type CryptoCurrency = CurrencyCommon & {
   // used for UI
   color: string,
   family: string,
+  ledgerExplorerId?: string,
   blockAvgTime?: number, // in seconds
   supportsSegwit?: boolean,
-  supportsNativeSegwit?: boolean,
   // if defined this coin is a testnet for another crypto (id)};
   isTestnetFor?: string,
   // TODO later we could express union of types with mandatory bitcoinLikeInfo for "bitcoin" family...
   bitcoinLikeInfo?: {
     P2PKH: number,
-    P2SH: number,
-    hasTimestamp?: boolean
+    P2SH: number
   },
   ethereumLikeInfo?: {
     chainId: number
   },
-  explorerViews: ExplorerView[],
-  terminated?: {
-    link: string
-  }
+  txExplorers: string[]
 };
 
-export type Currency = FiatCurrency | CryptoCurrency | TokenCurrency;
+export type Currency = Currency | CryptoCurrency;

@@ -1,9 +1,8 @@
 // @flow
 /* eslint-disable no-bitwise */
 
-import { log } from "@ledgerhq/logs";
 import type Transport from "@ledgerhq/hw-transport";
-import getVersion from "./getVersion";
+import getFirmwareInfo from "./getFirmwareInfo";
 import type { DeviceInfo } from "../types/manager";
 import { getEnv } from "../env";
 
@@ -15,45 +14,33 @@ const PROVIDERS: { [_: string]: number } = {
   ee: 5
 };
 
-const ManagerAllowedFlag = 0x08;
-const PinValidatedFlag = 0x80;
-
-export default async function getDeviceInfo(
-  transport: Transport<*>
-): Promise<DeviceInfo> {
-  const res = await getVersion(transport);
+export default async (transport: Transport<*>): Promise<DeviceInfo> => {
+  const res = await getFirmwareInfo(transport);
   const { seVersion } = res;
   const { targetId, mcuVersion, flags } = res;
-  const isOSU = seVersion.includes("-osu");
-  const version = seVersion.replace("-osu", "");
-  const m = seVersion.match(/([0-9]+.[0-9]+)(.[0-9]+)?(-(.*))?/);
-  const [, majMin, , , providerName] = m || [];
-  const forceProvider = getEnv("FORCE_PROVIDER");
-  const providerId =
-    forceProvider && forceProvider !== 1
-      ? forceProvider
-      : PROVIDERS[providerName] || 1;
+  const parsedVersion =
+    seVersion.match(/([0-9]+.[0-9])+(.[0-9]+)?((?!-osu)-([a-z]+))?(-osu)?/) ||
+    [];
+  const isOSU = typeof parsedVersion[5] !== "undefined";
+  const providerName = parsedVersion[4] || "";
+  const providerId = getEnv("FORCE_PROVIDER") || PROVIDERS[providerName];
   const isBootloader = (targetId & 0xf0000000) !== 0x30000000;
-  const flag = flags.length > 0 ? flags[0] : 0;
-  const managerAllowed = !!(flag & ManagerAllowedFlag);
-  const pinValidated = !!(flag & PinValidatedFlag);
-  log(
-    "hw",
-    "deviceInfo: se@" +
-      version +
-      " mcu@" +
-      mcuVersion +
-      (isOSU ? " (osu)" : isBootloader ? " (bootloader)" : "")
-  );
+  const majMin = parsedVersion[1];
+  const patch = parsedVersion[2] || ".0";
+  const fullVersion =
+    targetId === 0x33000004
+      ? "1.0"
+      : `${majMin}${patch}${providerName ? `-${providerName}` : ""}`;
   return {
-    version,
-    mcuVersion,
-    majMin,
-    providerId,
     targetId,
+    seVersion: majMin + patch,
+    rawVersion: majMin,
     isOSU,
+    mcuVersion,
     isBootloader,
-    managerAllowed,
-    pinValidated
+    providerName,
+    providerId,
+    flags,
+    fullVersion
   };
-}
+};

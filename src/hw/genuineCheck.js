@@ -4,13 +4,13 @@
 import Transport from "@ledgerhq/hw-transport";
 import { Observable, from } from "rxjs";
 import { switchMap } from "rxjs/operators";
-import type { DeviceInfo, SocketEvent } from "../types/manager";
+import type { DeviceInfo } from "../types/manager";
 import ManagerAPI from "../api/Manager";
 
 export default (
   transport: Transport<*>,
   deviceInfo: DeviceInfo
-): Observable<SocketEvent> =>
+): Observable<string> =>
   from(
     ManagerAPI.getDeviceVersion(deviceInfo.targetId, deviceInfo.providerId)
   ).pipe(
@@ -18,7 +18,7 @@ export default (
       from(
         ManagerAPI.getCurrentFirmware({
           deviceId: deviceVersion.id,
-          version: deviceInfo.version,
+          fullVersion: deviceInfo.fullVersion,
           provider: deviceInfo.providerId
         })
       )

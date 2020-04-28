@@ -1,5 +1,5 @@
 // @flow
-import { Observable, from, of, empty, concat, throwError } from "rxjs";
+import { Observable, from, of, empty, concat } from "rxjs";
 import {
   concatMap,
   delay,
@@ -7,13 +7,13 @@ import {
   distinctUntilChanged,
   throttleTime
 } from "rxjs/operators";
-import { log } from "@ledgerhq/logs";
-import { CantOpenDevice, DeviceInOSUExpected } from "@ledgerhq/errors";
+
+import { CantOpenDevice } from "../errors";
 import type { FirmwareUpdateContext } from "../types/manager";
-import { withDevicePolling } from "./deviceAccess";
-import getDeviceInfo from "./getDeviceInfo";
-import flash from "./flash";
-import installFinalFirmware from "./installFinalFirmware";
+import { withDevicePolling } from "../hw/deviceAccess";
+import getDeviceInfo from "../hw/getDeviceInfo";
+import flash from "../hw/flash";
+import installFinalFirmware from "../hw/installFinalFirmware";
 
 const wait2s = of({ type: "wait" }).pipe(delay(2000));
 
@@ -26,7 +26,6 @@ const main = (
   deviceId: string,
   { final, shouldFlashMCU }: FirmwareUpdateContext
 ): Observable<Res> => {
-  log("hw", "firmwareUpdate-main started");
   const withDeviceInfo = withDevicePolling(deviceId)(
     transport => from(getDeviceInfo(transport)),
     () => true // accept all errors. we're waiting forever condition that make getDeviceInfo work
@@ -39,24 +38,25 @@ const main = (
     );
 
   const waitForBootloader = withDeviceInfo.pipe(
-    concatMap(deviceInfo =>
-      deviceInfo.isBootloader ? empty() : concat(wait2s, waitForBootloader)
+    concatMap(
+      deviceInfo =>
+        deviceInfo.isBootloader ? empty() : concat(wait2s, waitForBootloader)
     )
   );
 
   const bootloaderLoop = withDeviceInfo.pipe(
-    concatMap(deviceInfo =>
-      !deviceInfo.isBootloader
-        ? empty()
-        : concat(withDeviceInstall(flash(final)), wait2s, bootloaderLoop)
+    concatMap(
+      deviceInfo =>
+        !deviceInfo.isBootloader
+          ? empty()
+          : concat(withDeviceInstall(flash(final)), wait2s, bootloaderLoop)
     )
   );
 
   const finalStep = withDeviceInfo.pipe(
-    concatMap(deviceInfo =>
-      !deviceInfo.isOSU
-        ? throwError(new DeviceInOSUExpected())
-        : withDeviceInstall(installFinalFirmware)
+    concatMap(
+      deviceInfo =>
+        !deviceInfo.isOSU ? empty() : withDeviceInstall(installFinalFirmware)
     )
   );
 
@@ -64,13 +64,14 @@ const main = (
     ? concat(waitForBootloader, bootloaderLoop, finalStep)
     : finalStep;
 
+  // $FlowFixMe something wrong with the flow def of scan()
   return all.pipe(
     scan(
-      (acc: Res, e: *): Res => {
+      (acc: Res, e): Res => {
         if (e.type === "install") {
+          // $FlowFixMe
           return { installing: e.step, progress: 0 };
-        }
-        if (e.type === "bulk-progress") {
+        } else if (e.type === "bulk-progress") {
           return { ...acc, progress: e.progress };
         }
         return acc;

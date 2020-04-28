@@ -2,39 +2,16 @@
 import invariant from "invariant";
 import type { CryptoCurrency, CryptoCurrencyConfig } from "./types";
 import { getCryptoCurrencyById } from "./currencies";
-import { getEnv } from "./env";
-
-type LibcoreConfig = {
-  [_: string]: mixed
-};
 
 export type ModeSpec = {
   mandatoryEmptyAccountSkip?: number,
   isNonIterable?: boolean,
-  startsAt?: number,
   overridesDerivation?: string,
-  libcoreConfig?: LibcoreConfig,
-  isSegwit?: boolean, // TODO drop
-  isUnsplit?: boolean, // TODO drop
-  skipFirst?: true,
-  overridesCoinType?: number, // force a given cointype
-  purpose?: number,
-  isInvalid?: boolean, // invalid means it's not a path we ever supported. some users fall into this and we support scanning for them in SCAN_FOR_INVALID_PATHS is set.
-  tag?: string,
-  addressFormat?: string
+  isSegwit?: boolean,
+  isUnsplit?: boolean
 };
 
 export type DerivationMode = $Keys<typeof modes>;
-
-const extraConfigPerCurrency: { [_: string]: LibcoreConfig } = {
-  tezos: {
-    BLOCKCHAIN_EXPLORER_ENGINE: "TZSTATS_API",
-    BLOCKCHAIN_EXPLORER_API_ENDPOINT: () =>
-      getEnv("API_TEZOS_BLOCKCHAIN_EXPLORER_API_ENDPOINT"),
-    TEZOS_PROTOCOL_UPDATE: "TEZOS_PROTOCOL_UPDATE_BABYLON",
-    TEZOS_NODE: () => getEnv("API_TEZOS_NODE")
-  }
-};
 
 const modes = Object.freeze({
   // this is "default" by convention
@@ -43,137 +20,52 @@ const modes = Object.freeze({
   // MEW legacy derivation
   ethM: {
     mandatoryEmptyAccountSkip: 10,
-    overridesDerivation: "44'/60'/0'/<account>",
-    tag: "legacy"
+    overridesDerivation: "44'/60'/0'/<account>"
   },
-  // MetaMask style
-  ethMM: {
-    overridesDerivation: "44'/60'/0'/0/<account>",
-    skipFirst: true, // already included in the normal bip44,
-    tag: "metamask"
+  // chrome wallet legacy derivation
+  ethW1: {
+    isNonIterable: true,
+    overridesDerivation: "44'/60'/0'/0'"
   },
-  // many users have wrongly sent BTC on BCH paths
-  legacy_on_bch: {
-    overridesCoinType: 145,
-    isInvalid: true
+  ethW2: {
+    isNonIterable: true,
+    overridesDerivation: "44'/60'/14'/5'/16"
   },
-  // chrome app and LL wrongly used to derivate vertcoin on 128
-  vertcoin_128: {
-    tag: "legacy",
-    overridesCoinType: 128
+  // chrome ripple legacy derivations
+  rip: {
+    isNonIterable: true,
+    overridesDerivation: "44'/144'/0'/0'"
   },
-  vertcoin_128_segwit: {
-    tag: "legacy",
-    overridesCoinType: 128,
-    isSegwit: true,
-    purpose: 49,
-    libcoreConfig: {
-      KEYCHAIN_ENGINE: "BIP49_P2SH"
-    },
-    addressFormat: "p2sh"
+  rip2: {
+    isNonIterable: true,
+    overridesDerivation: "44'/144'/14'/5'/16"
   },
   // MEW legacy derivation for eth
   etcM: {
     mandatoryEmptyAccountSkip: 10,
-    overridesDerivation: "44'/60'/160720'/0'/<account>",
-    tag: "legacy"
+    overridesDerivation: "44'/60'/160720'/0'/<account>"
   },
   aeternity: {
     overridesDerivation: "<account>"
   },
-  // default derivation of tezbox offerred to users
-  tezbox: {
-    overridesDerivation: "44'/1729'/<account>'/0'",
-    libcoreConfig: {
-      TEZOS_XPUB_CURVE: "ED25519"
-    }
-  },
-  tezosbip44h: {
-    tag: "galleon",
-    overridesDerivation: "44'/1729'/<account>'/0'/0'",
-    libcoreConfig: {
-      TEZOS_XPUB_CURVE: "ED25519"
-    }
-  },
-  galleonL: {
-    tag: "legacy",
-    startsAt: 1,
-    overridesDerivation: "44'/1729'/0'/0'/<account>'",
-    libcoreConfig: {
-      TEZOS_XPUB_CURVE: "ED25519"
-    }
-  },
-  tezboxL: {
-    tag: "legacy",
-    startsAt: 1,
-    overridesDerivation: "44'/1729'/0'/<account>'",
-    libcoreConfig: {
-      TEZOS_XPUB_CURVE: "ED25519"
-    }
-  },
-  native_segwit: {
-    purpose: 84,
-    libcoreConfig: {
-      KEYCHAIN_ENGINE: "BIP173_P2WPKH"
-    },
-    addressFormat: "bech32",
-    tag: "native segwit",
-    isSegwit: true
-  },
   segwit: {
-    isSegwit: true,
-    purpose: 49,
-    libcoreConfig: {
-      KEYCHAIN_ENGINE: "BIP49_P2SH"
-    },
-    tag: "segwit",
-    addressFormat: "p2sh"
-  },
-  segwit_on_legacy: {
-    isSegwit: true,
-    purpose: 44,
-    libcoreConfig: {
-      KEYCHAIN_ENGINE: "BIP49_P2SH"
-    },
-    addressFormat: "p2sh",
-    isInvalid: true
-  },
-  legacy_on_segwit: {
-    purpose: 49,
-    libcoreConfig: {
-      KEYCHAIN_ENGINE: "BIP32_P2PKH"
-    },
-    isInvalid: true
+    isSegwit: true
   },
   segwit_unsplit: {
     isSegwit: true,
-    purpose: 49,
-    libcoreConfig: {
-      KEYCHAIN_ENGINE: "BIP49_P2SH"
-    },
-    addressFormat: "p2sh",
-    isUnsplit: true,
-    tag: "segwit unsplit"
-  },
-  sep5: {
-    overridesDerivation: "44'/148'/<account>'"
+    isUnsplit: true
   },
   unsplit: {
-    isUnsplit: true,
-    tag: "unsplit"
+    isUnsplit: true
   }
 });
 
-(modes: { [_: DerivationMode]: ModeSpec }); // eslint-disable-line
+(modes: { [_: DerivationMode]: ModeSpec });
 
 const legacyDerivations: $Shape<CryptoCurrencyConfig<DerivationMode[]>> = {
-  aeternity: ["aeternity"],
-  bitcoin: ["legacy_on_bch"],
-  vertcoin: ["vertcoin_128", "vertcoin_128_segwit"],
-  ethereum: ["ethM", "ethMM"],
-  ethereum_classic: ["ethM", "etcM", "ethMM"],
-  tezos: ["galleonL", "tezboxL", "tezosbip44h", "tezbox"],
-  stellar: ["sep5"]
+  ethereum: ["ethM", "ethW1", "ethW2"],
+  ethereum_classic: ["ethM", "etcM", "ethW1", "ethW2"],
+  ripple: ["rip", "rip2"]
 };
 
 export const asDerivationMode = (derivationMode: string): DerivationMode => {
@@ -186,41 +78,13 @@ export const asDerivationMode = (derivationMode: string): DerivationMode => {
   return derivationMode;
 };
 
-export const getAllDerivationModes = (): DerivationMode[] => Object.keys(modes);
-
 export const getMandatoryEmptyAccountSkip = (
   derivationMode: DerivationMode
 ): number => modes[derivationMode].mandatoryEmptyAccountSkip || 0;
 
-export const isInvalidDerivationMode = (
-  derivationMode: DerivationMode
-): boolean => modes[derivationMode].isInvalid || false;
-
 export const isSegwitDerivationMode = (
   derivationMode: DerivationMode
 ): boolean => modes[derivationMode].isSegwit || false;
-
-export const getLibcoreConfig = (
-  currency: CryptoCurrency,
-  derivationMode: DerivationMode
-): { [_: string]: mixed } => {
-  const obj = {};
-  const extra = {
-    ...extraConfigPerCurrency[currency.id],
-    // $FlowFixMe
-    ...modes[derivationMode].libcoreConfig
-  };
-  for (let k in extra) {
-    const v = extra[k];
-    if (typeof v === "function") {
-      // $FlowFixMe
-      obj[k] = v();
-    } else {
-      obj[k] = v;
-    }
-  }
-  return obj;
-};
 
 export const isUnsplitDerivationMode = (
   derivationMode: DerivationMode
@@ -229,48 +93,6 @@ export const isUnsplitDerivationMode = (
 export const isIterableDerivationMode = (
   derivationMode: DerivationMode
 ): boolean => !modes[derivationMode].isNonIterable;
-
-export const getDerivationModeStartsAt = (
-  derivationMode: DerivationMode
-): number => modes[derivationMode].startsAt || 0;
-
-export const getPurposeDerivationMode = (
-  derivationMode: DerivationMode
-): number => modes[derivationMode].purpose || 44;
-
-export const getTagDerivationMode = (
-  currency: CryptoCurrency,
-  derivationMode: DerivationMode
-): ?string => {
-  const mode = modes[derivationMode];
-  if (mode.tag) {
-    return mode.tag;
-  }
-  if (mode.isInvalid) {
-    return "custom";
-  }
-  if (currency.supportsSegwit && !isSegwitDerivationMode(derivationMode)) {
-    return "legacy";
-  }
-  return null;
-};
-
-export const getAddressFormatDerivationMode = (
-  derivationMode: DerivationMode
-): string => modes[derivationMode].addressFormat || "legacy";
-
-export const derivationModeSupportsIndex = (
-  derivationMode: DerivationMode,
-  index: number
-): boolean => {
-  const mode = modes[derivationMode];
-  if (mode.skipFirst && index === 0) return false;
-  return true;
-};
-
-const currencyForceCoinType = {
-  vertcoin: true
-};
 
 /**
  * return a ledger-lib-core compatible DerivationScheme format
@@ -283,15 +105,14 @@ export const getDerivationScheme = ({
   derivationMode: DerivationMode,
   currency: CryptoCurrency
 }): string => {
-  const { overridesDerivation, overridesCoinType } = modes[derivationMode];
+  const { overridesDerivation } = modes[derivationMode];
   if (overridesDerivation) return overridesDerivation;
   const splitFrom =
     isUnsplitDerivationMode(derivationMode) && currency.forkedFrom;
   const coinType = splitFrom
     ? getCryptoCurrencyById(splitFrom).coinType
-    : overridesCoinType ||
-      (currencyForceCoinType ? currency.coinType : "<coin_type>");
-  const purpose = getPurposeDerivationMode(derivationMode);
+    : "<coin_type>";
+  const purpose = isSegwitDerivationMode(derivationMode) ? "49" : "44";
   return `${purpose}'/${coinType}'/<account>'/<node>/<address>`;
 };
 
@@ -311,32 +132,6 @@ export const runDerivationScheme = (
     .replace("<node>", String(opts.node || 0))
     .replace("<address>", String(opts.address || 0));
 
-const disableBIP44 = {
-  aeternity: true,
-  tezos: true, // current workaround, device app does not seem to support bip44
-  stellar: true
-};
-
-const seedIdentifierPath = {
-  neo: ({ purpose, coinType }) => `${purpose}'/${coinType}'/0'/0/0`,
-  _: ({ purpose, coinType }) => `${purpose}'/${coinType}'`
-};
-
-export const getSeedIdentifierDerivation = (
-  currency: CryptoCurrency,
-  derivationMode: DerivationMode
-): string => {
-  const unsplitFork = isUnsplitDerivationMode(derivationMode)
-    ? currency.forkedFrom
-    : null;
-  const purpose = getPurposeDerivationMode(derivationMode);
-  const { coinType } = unsplitFork
-    ? getCryptoCurrencyById(unsplitFork)
-    : currency;
-  const f = seedIdentifierPath[currency.id] || seedIdentifierPath._;
-  return f({ purpose, coinType });
-};
-
 // return an array of ways to derivate, by convention the latest is the standard one.
 export const getDerivationModesForCurrency = (
   currency: CryptoCurrency
@@ -351,21 +146,12 @@ export const getDerivationModesForCurrency = (
       all.push("segwit_unsplit");
     }
   }
-  if (currency.supportsSegwit) {
-    all.push("segwit_on_legacy");
-    all.push("legacy_on_segwit");
-  }
-  if (!disableBIP44[currency.id]) {
-    all.push("");
-  }
+  all.push("");
   if (currency.supportsSegwit) {
     all.push("segwit");
   }
-  if (currency.supportsNativeSegwit) {
-    all.push("native_segwit");
-  }
-  if (!getEnv("SCAN_FOR_INVALID_PATHS")) {
-    return all.filter(a => !isInvalidDerivationMode(a));
+  if (currency.id === "aeternity") {
+    return ["aeternity"];
   }
   return all;
 };

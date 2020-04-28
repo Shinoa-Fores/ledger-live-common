@@ -1,8 +1,4 @@
 // @flow
-import type { CryptoCurrency } from "./currencies";
-
-// FIXME we need to clearly differentiate what is API types and what is our inner own type
-
 export type Id = number;
 
 export type LedgerScriptParams = {
@@ -16,15 +12,16 @@ export type LedgerScriptParams = {
 };
 
 export type DeviceInfo = {
-  mcuVersion: string, // the raw mcu version
-  version: string, // the version part, without the -osu
-  majMin: string, // the x.y part of the x.y.z-v version
-  targetId: string | number, // a technical id
+  targetId: string | number,
+  seVersion: string,
+  rawVersion: string,
   isBootloader: boolean,
+  flags: string,
+  mcuVersion: string,
   isOSU: boolean,
+  providerName: string,
   providerId: number,
-  managerAllowed: boolean,
-  pinValidated: boolean
+  fullVersion: string
 };
 
 export type DeviceVersion = {
@@ -89,8 +86,7 @@ export type FinalFirmware = BaseFirmware & {
   se_firmware: Id,
   osu_versions: Array<OsuFirmware>,
   mcu_versions: Array<Id>,
-  application_versions: Array<Id>,
-  bytes?: number
+  application_versions: Array<Id>
 };
 
 export type FirmwareUpdateContext = {
@@ -107,6 +103,7 @@ export type ApplicationVersion = {
   description: ?string,
   display_name: string,
   icon: string,
+  picture: Id,
   notes: ?string,
   perso: string,
   hash: string,
@@ -118,12 +115,7 @@ export type ApplicationVersion = {
   se_firmware_final_versions: Array<Id>,
   providers: Array<Id>,
   date_creation: string,
-  date_last_modified: string,
-  // dependencies: Id[],
-  bytes: ?number,
-  warning: ?string,
-  // DEPRECATED because not serializable
-  currency?: CryptoCurrency
+  date_last_modified: string
 };
 
 export type Application = {
@@ -135,43 +127,7 @@ export type Application = {
   category: Id,
   publisher: ?Id,
   date_creation: string,
-  date_last_modified: string,
-  currencyId: ?string,
-  authorName: ?string,
-  supportURL: ?string,
-  contactURL: ?string,
-  sourceURL: ?string,
-  compatibleWalletsJSON: ?string
-};
-
-// App is higher level on top of Application and ApplicationVersion
-// with all fields Live needs and in normalized form (but still serializable)
-export type App = {
-  id: Id,
-  name: string,
-  version: string,
-  currencyId: ?string,
-  description: ?string,
-  dateModified: string,
-  icon: string,
-  authorName: ?string,
-  supportURL: ?string,
-  contactURL: ?string,
-  sourceURL: ?string,
-  compatibleWallets: Array<{ name: string, url: ?string }>,
-  hash: string,
-  perso: string,
-  firmware: string,
-  firmware_key: string,
-  delete: string,
-  delete_key: string,
-  // we use names to identify an app
-  dependencies: string[],
-  bytes: ?number,
-  warning: ?string,
-  // -1 if coin not in marketcap, otherwise index in the tickers list of https://countervalues.api.live.ledger.com/tickers
-  indexOfMarketCap: number,
-  isDevTools: boolean
+  date_last_modified: string
 };
 
 export type Category = {
@@ -183,20 +139,3 @@ export type Category = {
   date_creation: string,
   date_last_modified: string
 };
-
-export type SocketEvent =
-  | { type: "bulk-progress", progress: number, index: number, total: number }
-  | { type: "result", payload: any }
-  | { type: "warning", message: string }
-  | { type: "device-permission-requested", wording: string }
-  | { type: "device-permission-granted" }
-  | { type: "exchange-before", nonce: number, apdu: Buffer }
-  | {
-      type: "exchange",
-      nonce: number,
-      apdu: Buffer,
-      data: Buffer,
-      status: number
-    }
-  | { type: "opened" }
-  | { type: "closed" };

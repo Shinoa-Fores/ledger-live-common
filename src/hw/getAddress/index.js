@@ -1,37 +1,51 @@
 // @flow
 import invariant from "invariant";
-import {
-  DeviceAppVerifyNotSupported,
-  UserRefusedAddress
-} from "@ledgerhq/errors";
-import { log } from "@ledgerhq/logs";
-import type { Resolver } from "./types";
-import perFamily from "../../generated/hw-getAddress";
+import type Transport from "@ledgerhq/hw-transport";
+import type { CryptoCurrency } from "../../types";
+import { DeviceAppVerifyNotSupported, UserRefusedAddress } from "../../errors";
 
-const dispatch: Resolver = (transport, opts) => {
-  const { currency, verify } = opts;
-  const getAddress = perFamily[currency.family];
-  invariant(getAddress, `getAddress is not implemented for ${currency.id}`);
-  return getAddress(transport, opts)
-    .then(result => {
-      log("hw", `getAddress ${currency.id} on ${opts.path}`, result);
-      return result;
-    })
-    .catch(e => {
-      log(
-        "hw",
-        `getAddress ${currency.id} on ${opts.path} FAILED ${String(e)}`
-      );
-      if (e && e.name === "TransportStatusError") {
-        if (e.statusCode === 0x6b00 && verify) {
-          throw new DeviceAppVerifyNotSupported();
-        }
-        if (e.statusCode === 0x6985) {
-          throw new UserRefusedAddress();
-        }
-      }
-      throw e;
-    });
+import aeternity from "./aeternity";
+import bitcoin from "./btc";
+import ethereum from "./ethereum";
+import ripple from "./ripple";
+
+export const perFamily: { [_: string]: Resolver } = {
+  aeternity,
+  bitcoin,
+  ethereum,
+  ripple
 };
 
-export default dispatch;
+export default (
+  transport: Transport<*>,
+  currency: CryptoCurrency,
+  path: string,
+  verify: boolean = false
+): Promise<Result> => {
+  const getAddress = perFamily[currency.family];
+  invariant(getAddress, `getAddress is not implemented for ${currency.id}`);
+  return getAddress(transport, currency, path, verify).catch(e => {
+    if (e && e.name === "TransportStatusError") {
+      if (e.statusCode === 0x6b00 && verify) {
+        throw new DeviceAppVerifyNotSupported();
+      }
+      if (e.statusCode === 0x6985) {
+        throw new UserRefusedAddress();
+      }
+    }
+    throw e;
+  });
+};
+
+type Result = {
+  address: string,
+  path: string,
+  publicKey: string
+};
+
+type Resolver = (
+  transport: Transport<*>,
+  currency: CryptoCurrency,
+  path: string,
+  verify: boolean
+) => Promise<Result>;

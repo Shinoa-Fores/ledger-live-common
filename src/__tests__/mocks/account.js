@@ -1,23 +1,10 @@
-import "../test-helpers/staticTime";
-import "../../load/tokens/ethereum/erc20";
-import "../../load/tokens/tron/trc10";
-import "../../load/tokens/tron/trc20";
-
 import { genAccount } from "../../mock/account";
-import { getBalanceHistory } from "../../portfolio";
-import { getEnv, setEnv } from "../../env";
+import { getBalanceHistory } from "../../account";
 
 test("generate an account from seed", () => {
   const a = genAccount("seed");
   const b = genAccount("seed");
   expect(a).toEqual(b);
-});
-
-test("generate an account from different seed should generate a different account", () => {
-  const a = genAccount(getEnv("MOCK"));
-  setEnv("MOCK", "çacestvraiça");
-  const b = genAccount(getEnv("MOCK"));
-  expect(a).not.toEqual(b);
 });
 
 test("dont generate negative balance", () => {
@@ -34,7 +21,7 @@ test("allow specifying number of operations", () => {
 test("mock generators don't generate negative balances", () => {
   for (let i = 0; i < 100; i++) {
     const account = genAccount("negative?" + i);
-    const history = getBalanceHistory(account, "year");
+    const history = getBalanceHistory(account, 300);
     const invalidDataPoints = history.filter(h => h.value.isNegative());
     expect(invalidDataPoints).toMatchObject([]);
   }

@@ -31,10 +31,9 @@ const getFormatForLocale = (locale: string) => {
 
 export const toLocaleString = (
   n: BigNumber,
-  localeInput?: string,
+  locale?: string,
   options: $Shape<SupportedOptions> = {}
 ): string => {
-  let locale = localeInput;
   if (!locale) locale = "en";
   const minimumFractionDigits =
     "minimumFractionDigits" in options ? options.minimumFractionDigits : 0;
@@ -66,7 +65,7 @@ export const toLocaleString = (
       i--;
     }
     return maxDecimals.slice(0, i);
+  } else {
+    return maxDecimals;
   }
-
-  return maxDecimals;
 };

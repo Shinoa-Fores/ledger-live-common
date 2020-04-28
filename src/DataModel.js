@@ -39,7 +39,7 @@ export function createDataModel<R, M>(
   const { migrations, encode, decode } = schema;
   const version = migrations.length;
   function decodeModel(raw) {
-    let { data } = raw;
+    let data = raw.data;
     for (let i = raw.version; i < version; i++) {
       data = migrations[i](data);
     }

@@ -1,11 +1,4 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
-libcoredb/
-
-dbdata
-tmp
-
-.yalc
-yalc.lock
 
 # dependencies
 node_modules/
@@ -15,7 +8,6 @@ node_modules/
 
 # build
 /lib
-/lib-es
 
 # misc
 .DS_Store
@@ -29,13 +21,8 @@ yarn-error.log*
 # git mergetool
 *.orig
 
+flow-typed/
 flow-coverage
 
-# Generated icons
 src/data/icons/react
 src/data/icons/reactNative
-src/partners/icons/react
-src/partners/icons/reactNative
-
-cli/tests/*/output
-cli/tests/tmp

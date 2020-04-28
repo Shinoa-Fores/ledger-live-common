@@ -1,8 +1,1 @@
-src/partners/icons/*/*.js
-src/data/icons
-
-src/libcore/types/*.js
-src/families/*/types.js
-src/libcore/platforms/*.js
-src/generated
-mobile-test-app/
+src/__tests__

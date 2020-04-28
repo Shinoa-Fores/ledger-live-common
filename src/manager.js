@@ -2,29 +2,19 @@
 /* eslint-disable camelcase */
 // Higher level cache on top of Manager
 
-import { UnknownMCU } from "@ledgerhq/errors";
 import type {
   ApplicationVersion,
   DeviceInfo,
   OsuFirmware,
   FirmwareUpdateContext
 } from "./types/manager";
-import { listCryptoCurrencies } from "./currencies";
 import ManagerAPI from "./api/Manager";
 
 const ICONS_FALLBACK = {
   bitcoin_testnet: "bitcoin"
 };
 
-const oldAppsInstallDisabled = ["ZenCash", "Ripple", "Ontology"];
-const canHandleInstall = (app: ApplicationVersion) =>
-  !oldAppsInstallDisabled.includes(app.name) &&
-  !listCryptoCurrencies(true, true).some(
-    coin =>
-      coin.managerAppName &&
-      coin.terminated &&
-      coin.managerAppName.toLowerCase() === app.name.toLowerCase()
-  );
+const oldAppsInstallDisabled = ["ZenCash", "Ripple"];
 
 const CacheAPI = {
   // TODO: Move to new ManagerAPI
@@ -42,7 +32,8 @@ const CacheAPI = {
     return hash.length > 8 ? `${hash.slice(0, 4)}...${hash.substr(-4)}` : hash;
   },
 
-  canHandleInstall,
+  canHandleInstall: (app: ApplicationVersion) =>
+    !oldAppsInstallDisabled.includes(app.name),
 
   getLatestFirmwareForDevice: async (
     deviceInfo: DeviceInfo
@@ -61,12 +52,12 @@ const CacheAPI = {
       osu = await ManagerAPI.getCurrentOSU({
         deviceId: deviceVersion.id,
         provider: deviceInfo.providerId,
-        version: deviceInfo.version
+        version: deviceInfo.seVersion
       });
     } else {
       // Get firmware infos with firmware name and device version
       const seFirmwareVersion = await ManagerAPI.getCurrentFirmware({
-        version: deviceInfo.version,
+        fullVersion: deviceInfo.fullVersion,
         deviceId: deviceVersion.id,
         provider: deviceInfo.providerId
       });
@@ -92,10 +83,9 @@ const CacheAPI = {
     const currentMcuVersion = mcus.find(
       mcu => mcu.name === deviceInfo.mcuVersion
     );
-
-    if (!currentMcuVersion) throw new UnknownMCU();
-
-    const shouldFlashMCU = !final.mcu_versions.includes(currentMcuVersion.id);
+    const shouldFlashMCU = !currentMcuVersion
+      ? false
+      : !final.mcu_versions.includes(currentMcuVersion.id);
 
     return { final, osu, shouldFlashMCU };
   },
@@ -107,8 +97,6 @@ const CacheAPI = {
     // TODO getFullListSortedCryptoCurrencies can be a local function.. too much dep for now
     getFullListSortedCryptoCurrencies: * = () => Promise.resolve([])
   ): Promise<ApplicationVersion[]> => {
-    console.warn("deprecated: use @ledgerhq/live-common/src/apps/* instead");
-
     if (deviceInfo.isOSU || deviceInfo.isBootloader) return Promise.resolve([]);
 
     const deviceVersionP = ManagerAPI.getDeviceVersion(
@@ -119,7 +107,7 @@ const CacheAPI = {
     const firmwareDataP = deviceVersionP.then(deviceVersion =>
       ManagerAPI.getCurrentFirmware({
         deviceId: deviceVersion.id,
-        version: deviceInfo.version,
+        fullVersion: deviceInfo.fullVersion,
         provider: deviceInfo.providerId
       })
     );
@@ -162,7 +150,7 @@ const CacheAPI = {
       );
       if (app) {
         filtered.splice(filtered.indexOf(app), 1);
-        sortedCryptoApps.push({ ...app, currency: crypto });
+        sortedCryptoApps.push(app);
       }
     });
 

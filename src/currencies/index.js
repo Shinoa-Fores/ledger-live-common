@@ -1,51 +1,24 @@
-// @flow
-
+//@flow
 import { encodeURIScheme, decodeURIScheme } from "./CurrencyURIScheme";
 import type { Currency } from "../types";
 
 import { sanitizeValueString } from "./sanitizeValueString";
 
 import {
-  sortByMarketcap,
-  getMarketcapTickers,
-  useMarketcapTickers,
-  currenciesByMarketcap,
-  useCurrenciesByMarketcap
-} from "./sortByMarketcap";
-
-import {
   listFiatCurrencies,
   findFiatCurrencyByTicker,
   getFiatCurrencyByTicker,
-  hasFiatCurrencyTicker,
-  isFiatSupported,
-  listSupportedFiats,
-  setSupportedFiats
+  hasFiatCurrencyTicker
 } from "../data/fiat";
 
 import {
   listCryptoCurrencies,
   getCryptoCurrencyById,
   hasCryptoCurrencyId,
-  findCryptoCurrency,
   findCryptoCurrencyById,
   findCryptoCurrencyByScheme,
-  findCryptoCurrencyByTicker,
-  isCurrencySupported,
-  setSupportedCurrencies,
-  listSupportedCurrencies
+  findCryptoCurrencyByTicker
 } from "../data/cryptocurrencies";
-
-import {
-  listTokens,
-  listTokensForCryptoCurrency,
-  listTokenTypesForCryptoCurrency,
-  findTokenByTicker,
-  findTokenById,
-  findTokenByAddress,
-  hasTokenId,
-  getTokenById
-} from "../data/tokens";
 
 import { parseCurrencyUnit } from "./parseCurrencyUnit";
 
@@ -60,43 +33,19 @@ import { formatShort } from "./formatShort";
 
 import { valueFromUnit } from "./valueFromUnit";
 
-import { getCurrencyColor } from "./color";
-
 const findCurrencyByTicker = (ticker: string): ?Currency =>
-  findCryptoCurrencyByTicker(ticker) ||
-  findFiatCurrencyByTicker(ticker) ||
-  findTokenByTicker(ticker);
+  findCryptoCurrencyByTicker(ticker) || findFiatCurrencyByTicker(ticker);
 
 export {
-  sortByMarketcap,
-  getMarketcapTickers,
-  useMarketcapTickers,
-  currenciesByMarketcap,
-  useCurrenciesByMarketcap,
   listFiatCurrencies,
-  isFiatSupported,
-  listSupportedFiats,
-  setSupportedFiats,
   listCryptoCurrencies,
-  setSupportedCurrencies,
-  listSupportedCurrencies,
-  isCurrencySupported,
   getFiatCurrencyByTicker,
   findCurrencyByTicker,
-  findCryptoCurrency,
   findCryptoCurrencyById,
   findCryptoCurrencyByTicker,
   findCryptoCurrencyByScheme,
   findFiatCurrencyByTicker,
   hasFiatCurrencyTicker,
-  listTokens,
-  listTokensForCryptoCurrency,
-  listTokenTypesForCryptoCurrency,
-  findTokenByAddress,
-  findTokenByTicker,
-  findTokenById,
-  hasTokenId,
-  getTokenById,
   parseCurrencyUnit,
   chopCurrencyUnitDecimals,
   formatCurrencyUnit,
@@ -107,6 +56,5 @@ export {
   encodeURIScheme,
   decodeURIScheme,
   valueFromUnit,
-  sanitizeValueString,
-  getCurrencyColor
+  sanitizeValueString
 };
